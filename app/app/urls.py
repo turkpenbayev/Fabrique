@@ -44,6 +44,7 @@ urlpatterns = [
                                            cache_timeout=0), name='schema-redoc'),
 
     path('api/v1/', include('users.urls')),
+    path('api/v1/', include('surveys.urls')),
 ]
 
 
