@@ -6,6 +6,7 @@ from .models import *
 
 
 class ChoiceSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
     text = serializers.CharField()
 
 

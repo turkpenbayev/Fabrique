@@ -51,3 +51,22 @@ class User(AbstractUser):
 
     def __str__(self,):
         return f"{self.username} - {self.first_name} {self.last_name}"
+
+
+class UserResponse(models.Model):
+    """
+        a response object is just a collection of questions and answers 
+    """
+    created = models.DateTimeField(auto_now_add=True)
+    survey = models.ForeignKey(
+        'surveys.Survey', on_delete=models.SET_NULL, null=True, blank=True)
+    user_id = models.CharField("user unique identifier", max_length=36)
+    is_anonymous = models.BooleanField(default=False)
+
+
+class Answer(models.Model):
+    question = models.ForeignKey('surveys.Question', on_delete=models.CASCADE)
+    response = models.ForeignKey(
+        UserResponse, related_name="answers", on_delete=models.CASCADE)
+    choices = models.ManyToManyField('surveys.Choice')
+    text = models.TextField(blank=True, null=True)

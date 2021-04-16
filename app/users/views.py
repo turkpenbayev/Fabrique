@@ -70,3 +70,47 @@ class AuthViewSet(viewsets.GenericViewSet):
         if self.action in self.serializer_classes.keys():
             return self.serializer_classes[self.action]
         return super().get_serializer_class()
+    
+    
+
+class UserResponseViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny, ]
+    serializer_class = UserResponseSerializer
+    queryset = UserResponse.objects.all()
+    http_method_names = ['get', 'post', 'delete',]
+    serializer_classes = {
+        'list': UserResponseSerializer,
+        'retrieve': UserResponseSerializer,
+        'create': UserResponseCreateSerializer,
+        # 'destroy': SurveySerializer,
+        # 'active_survey': SurveySerializer
+    }
+    
+    def get_serializer_class(self):
+        if not isinstance(self.serializer_classes, dict):
+            raise ImproperlyConfigured(
+                "serializer_classes should be a dict mapping.")
+
+        if self.action in self.serializer_classes.keys():
+            return self.serializer_classes[self.action]
+        return super().get_serializer_class()
+    
+    def get_permissions(self):
+        if self.action in ['create']:
+            # which is permissions.AllowAny
+            self.permission_classes = [AllowAny]
+        else:
+             # which is permissions.IsAdminUser
+            self.permission_classes = [IsAdminUser]
+
+        return super(UserResponseViewSet, self).get_permissions()
+    
+    @action(methods=['get'], detail=False,
+            permission_classes=[AllowAny, ],
+            url_path='(?P<user_id>[^/.]+)',
+            url_name='user_survey',)
+    def user_id_survey(self, request, user_id=None):
+        queryset = self.queryset.filter(user_id=user_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+    

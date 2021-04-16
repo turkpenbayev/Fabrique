@@ -6,8 +6,10 @@ from rest_framework import serializers
 from django.utils.translation import ugettext as _
 from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.models import BaseUserManager
+from django.db import transaction
 
 from .models import *
+from surveys.models import Choice, Question
 
 
 User = get_user_model()
@@ -83,3 +85,57 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('first_name', 'last_name',)
+
+
+class AnswerCreateSerializer(serializers.ModelSerializer):
+    choices = serializers.PrimaryKeyRelatedField(
+        queryset=Choice.objects.all(), many=True)
+
+    class Meta:
+        model = Answer
+        fields = ('question', 'choices', 'text')
+
+
+class UserResponseCreateSerializer(serializers.ModelSerializer):
+    answers = AnswerCreateSerializer(many=True, write_only=True)
+
+    class Meta:
+        model = UserResponse
+        fields = ('id', 'survey', 'user_id', 'is_anonymous', 'answers')
+
+    def create(self, validated_data):
+        try:
+            answers = validated_data.pop('answers', [])
+            with transaction.atomic():
+                instance = UserResponse.objects.create(**validated_data)
+                # bulk_create 
+                for item in answers:
+                    choices = item.pop('choices', [])
+                    answer = Answer.objects.create(**item, response=instance)
+                    answer.choices.add(*choices)
+            return instance
+        except Exception as ex:
+            raise serializers.ValidationError(ex)
+        
+
+class AnswerSerializer(serializers.ModelSerializer):
+    body = serializers.SerializerMethodField()
+    question_type = serializers.IntegerField(source='question.question_type')
+
+    class Meta:
+        model = Answer
+        fields = ('question', 'question_type','body')
+        
+    def get_body(self, obj):
+        if obj.question.question_type == Question.TEXT:
+            return obj.question.text
+        else:
+            return [choice.text for choice in obj.choices.all()]
+        
+
+class UserResponseSerializer(serializers.ModelSerializer):
+    answers = AnswerSerializer(many=True)
+
+    class Meta:
+        model = UserResponse
+        fields = ('id', 'survey', 'user_id', 'is_anonymous', 'answers')

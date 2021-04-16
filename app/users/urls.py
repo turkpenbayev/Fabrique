@@ -6,5 +6,6 @@ from .views import *
 
 router = routers.DefaultRouter()
 router.register('auth', AuthViewSet, basename='auth')
+router.register('user-response', UserResponseViewSet, basename='user-response')
 
 urlpatterns = router.urls
