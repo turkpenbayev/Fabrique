@@ -60,7 +60,7 @@ class UserResponse(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     survey = models.ForeignKey(
         'surveys.Survey', on_delete=models.SET_NULL, null=True, blank=True)
-    user_id = models.CharField("user unique identifier", max_length=36)
+    user_id = models.CharField("user unique identifier", max_length=36, null=True, blank=True)
     is_anonymous = models.BooleanField(default=False)
 
 

@@ -97,11 +97,22 @@ class AnswerCreateSerializer(serializers.ModelSerializer):
 
 
 class UserResponseCreateSerializer(serializers.ModelSerializer):
+    user_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
     answers = AnswerCreateSerializer(many=True, write_only=True)
 
     class Meta:
         model = UserResponse
         fields = ('id', 'survey', 'user_id', 'is_anonymous', 'answers')
+        
+    def validate(self, data):
+        # The keys can be missing in partial updates
+        if data["is_anonymous"]:
+            if "user_id" not in data or data["user_id"]=="":
+                raise serializers.ValidationError({
+                    "user_id": "set user id if is_anonymous=true",
+                })
+                
+        return super(UserResponseCreateSerializer, self).validate(data)
 
     def create(self, validated_data):
         try:
@@ -135,6 +146,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class UserResponseSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True)
+    
 
     class Meta:
         model = UserResponse

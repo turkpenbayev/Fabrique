@@ -52,7 +52,6 @@ class AuthViewSet(viewsets.GenericViewSet):
         data = {'success': 'Sucessfully logged out'}
         return Response(data=data, status=status.HTTP_200_OK)
 
-
     @action(methods=['POST'], detail=False, permission_classes=[IsAuthenticated, ])
     def password_change(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -60,7 +59,6 @@ class AuthViewSet(viewsets.GenericViewSet):
         request.user.set_password(serializer.validated_data['new_password'])
         request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
- 
 
     def get_serializer_class(self):
         if not isinstance(self.serializer_classes, dict):
@@ -70,14 +68,13 @@ class AuthViewSet(viewsets.GenericViewSet):
         if self.action in self.serializer_classes.keys():
             return self.serializer_classes[self.action]
         return super().get_serializer_class()
-    
-    
+
 
 class UserResponseViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny, ]
     serializer_class = UserResponseSerializer
     queryset = UserResponse.objects.all()
-    http_method_names = ['get', 'post', 'delete',]
+    http_method_names = ['get', 'post', 'delete', ]
     serializer_classes = {
         'list': UserResponseSerializer,
         'retrieve': UserResponseSerializer,
@@ -85,7 +82,7 @@ class UserResponseViewSet(viewsets.ModelViewSet):
         # 'destroy': SurveySerializer,
         # 'active_survey': SurveySerializer
     }
-    
+
     def get_serializer_class(self):
         if not isinstance(self.serializer_classes, dict):
             raise ImproperlyConfigured(
@@ -94,17 +91,17 @@ class UserResponseViewSet(viewsets.ModelViewSet):
         if self.action in self.serializer_classes.keys():
             return self.serializer_classes[self.action]
         return super().get_serializer_class()
-    
+
     def get_permissions(self):
         if self.action in ['create']:
             # which is permissions.AllowAny
             self.permission_classes = [AllowAny]
         else:
-             # which is permissions.IsAdminUser
+            # which is permissions.IsAdminUser
             self.permission_classes = [IsAdminUser]
 
         return super(UserResponseViewSet, self).get_permissions()
-    
+
     @action(methods=['get'], detail=False,
             permission_classes=[AllowAny, ],
             url_path='(?P<user_id>[^/.]+)',
@@ -113,4 +110,3 @@ class UserResponseViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user_id=user_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
-    
