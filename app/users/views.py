@@ -73,7 +73,11 @@ class AuthViewSet(viewsets.GenericViewSet):
 class UserResponseViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny, ]
     serializer_class = UserResponseSerializer
-    queryset = UserResponse.objects.all()
+    queryset = UserResponse.objects.prefetch_related(
+        Prefetch('answers', Answer.objects.select_related(
+            'question').prefetch_related(
+            'choices').all()
+            )).all()
     http_method_names = ['get', 'post', 'delete', ]
     serializer_classes = {
         'list': UserResponseSerializer,
