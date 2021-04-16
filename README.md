@@ -7,7 +7,11 @@ Uses gunicorn + nginx
     $ docker-compose up -d --build
     ```
 
-1. Change .env files MODE=prod if want to use PostgreSQL for db
+1. Build the images for production uses PostgreSQL for db:
+
+    ```sh
+    $ docker-compose -f docker-compose.prod.yml up -d --build
+    ```
 
 1. Test it out at [http://localhost](http://localhost)
 1. Api Docs at [http://localhost/api/docs/](http://localhost/api/docs/)
