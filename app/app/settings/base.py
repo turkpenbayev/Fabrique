@@ -18,8 +18,6 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'rest_framework',
-    'rest_framework.authtoken',
-    'corsheaders',
     'drf_yasg',
     
     'django.contrib.admin',
@@ -29,7 +27,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'users',
     'surveys',
 ]
 
@@ -92,13 +89,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/staticfiles/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 MEDIA_URL = '/mediafiles/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, "staticfiles")
@@ -107,9 +103,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 LOGOUT_REDIRECT_URL = "api/docs/"
-
-AUTH_USER_MODEL = 'users.User'
-LOGIN_REDIRECT_URL = 'profile'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -134,6 +127,3 @@ SWAGGER_SETTINGS = {
         }
     },
 }
-
-LOGIN_URL = 'rest_framework:login'
-LOGOUT_URL = 'rest_framework:logout'

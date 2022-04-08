@@ -1,9 +1,7 @@
 from rest_framework import routers
 
-from .views import *
+from .views import ProtectViewSet
 
 router = routers.DefaultRouter()
-router.register('survey', SurveyViewSet, basename='survey')
-router.register('question', QuestionViewSet, basename='question')
-
-urlpatterns = router.urls
+router.register('protect', ProtectViewSet, basename='protect')
+urlpatterns = [*router.urls]

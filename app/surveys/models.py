@@ -1,34 +1,16 @@
+import os
+
 from django.db import models
+from django.core.validators import FileExtensionValidator
 
 
-class Survey(models.Model):
-    name = models.CharField(max_length=400)
-    description = models.TextField()
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
-    created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return (self.name)
+def get_upload_path(instance, filename):
+    name, ext = os.path.splitext(filename)
+    return os.path.join(f'{str(instance.__class__.__name__).lower()}s', f'{name}{ext}')
 
 
-class Question(models.Model):
-    TEXT = 1
-    RADIO = 2
-    SELECT = 3
-
-    QUESTION_TYPES = (
-        (TEXT, 'text'),
-        (RADIO, 'radio'),
-        (SELECT, 'select'),
-    )
-
-    text = models.TextField()
-    survey = models.ForeignKey(Survey, on_delete=models.CASCADE, related_name='questions')
-    question_type = models.PositiveSmallIntegerField(choices=QUESTION_TYPES, default=TEXT)
-
-
-class Choice(models.Model):
-    question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name='choices')
-    text = models.CharField(max_length=400)
+class Checksum(models.Model):
+    author = models.CharField(max_length=400)
+    hash = models.CharField(db_index=True, max_length=128)
+    doc = models.FileField(upload_to=get_upload_path, validators=[FileExtensionValidator(allowed_extensions=['txt'])])
+    created_at= models.DateTimeField(auto_now_add=True)
