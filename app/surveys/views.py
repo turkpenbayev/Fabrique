@@ -1,75 +1,26 @@
+from django.db.models import Q
 from rest_framework.response import Response
-from rest_framework import status, viewsets
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from rest_framework.decorators import action
-from django.db.models import Prefetch, Q, Sum, Count
+from rest_framework import status, mixins, viewsets
+from rest_framework.parsers import MultiPartParser, FormParser
+from drf_yasg.utils import swagger_auto_schema
 
-from .serializers import *
-from .models import *
-
-
-class SurveyViewSet(viewsets.ModelViewSet):
-
-    permission_classes = [IsAdminUser, ]
-    serializer_class = SurveySerializer
-    queryset = Survey.objects.all()
-    http_method_names = ['get', 'post', 'delete', 'patch']
-    serializer_classes = {
-        'list': SurveySerializer,
-        'retrieve': SurveyDetailSerializer,
-        'create': SurveySerializer,
-        'partial_update': SurveyUpdateSerializer,
-        'destroy': SurveySerializer,
-        'active_survey': SurveySerializer
-    }
-
-    def get_queryset(self):
-        """
-        if user not super admin return only active surveys
-
-        """
-        queryset = self.queryset
-
-        if self.action in ['retrieve']:
-            queryset = queryset.prefetch_related(
-                'questions', 'questions__choices')
-
-        user = self.request.user
-        if not user.is_authenticated or not user.is_superuser:
-            queryset = self.queryset.filter(end_date__gt=timezone.now())
-
-        return queryset
-
-    def get_serializer_class(self):
-        if not isinstance(self.serializer_classes, dict):
-            raise ImproperlyConfigured(
-                "serializer_classes should be a dict mapping.")
-        if self.action in self.serializer_classes.keys():
-            return self.serializer_classes[self.action]
-        return super().get_serializer_class()
-
-    def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy', 'create',]:
-            # which is permissions.IsAdminUser
-            self.permission_classes = [IsAdminUser]
-        else:
-            # which is permissions.AllowAny
-            self.permission_classes = [AllowAny]
-
-        return super(SurveyViewSet, self).get_permissions()
-
-    @action(methods=['get'], detail=False,
-            permission_classes=[AllowAny, ],
-            url_path='active-survey',
-            url_name='active_survey',)
-    def active_survey(self, request):
-        queryset = self.queryset.filter(end_date__gt=timezone.now())
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+from .utils import checksum_md5
+from .serializers import ChecksumSerializer, ChecksumReadSerializer
+from .models import Checksum
 
 
-class QuestionViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser, ]
-    serializer_class = QuestionSerializer
-    queryset = Question.objects.all().prefetch_related('choices')
-    http_method_names = ['get', 'post', 'delete', 'patch']
+class ProtectViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    serializer_class = ChecksumSerializer
+    parser_classes=[MultiPartParser, FormParser]
+
+    @swagger_auto_schema(responses={status.HTTP_200_OK: ChecksumReadSerializer})
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(hash='')
+        hash_md5 = checksum_md5(instance.doc.path)
+        instance.hash = hash_md5
+        instance.save()
+        if Checksum.objects.filter(Q(hash=hash_md5) & ~Q(pk=instance.pk)).exists():
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(ChecksumReadSerializer(instance).data, status=status.HTTP_200_OK)
